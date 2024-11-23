@@ -1,6 +1,20 @@
 #!/usr/bin/env Rscript
 
 
+
+# ensures the geometry column is called 'geom'
+renameGeometryColumn <- function(df) {
+  if (
+    intersect(colnames(df),
+              c("GEOM", "GEOMETRY", "geometry")) %>% length() > 0
+  ) {
+    st_geometry(df) <- "geom"
+  }
+  return(df)
+}
+  
+
+
 # converts a meshblock count excel spreadsheet to a csv
 convertMeshblockCountToCsv <- function(input_file, output_file) {
   # input_file <- "mb_count_2021.xlsx"; output_file <- "mb_count_2021.csv"
@@ -20,20 +34,35 @@ convertMeshblockCountToCsv <- function(input_file, output_file) {
   colnames(start_row) <-"first_column"
   start_row <- start_row %>%
     mutate(row_num=row_number()+1) %>%
-    mutate(is_start=grepl("MB_CODE*",first_column,ignore.case=T)) %>%
+    mutate(is_start=grepl("MB_CODE*|Mesh_Block*",first_column,ignore.case=T)) %>%
     filter(is_start) %>%
     pull(row_num)
 
   # loop through each sheet, adding the data to mb_count_df
   for (i in sheet_names) {
     # i=sheet_names[1]
+    
+    # Mesh_Block_ID	| Dwellings | Persons_Usually_Resident
+    # MB_CODE_2016 | MB_CATEGORY_NAME_2016 | AREA_ALBERS_SQKM | Dwelling | Person | State
+    
+    
     sheet_current <- read_excel(
       input_file,
       sheet = i,
       range = cell_rows(start_row:1000000)
-    ) %>%
-      filter(!is.na(State)) %>%
-      mutate(across(starts_with("MB_CODE"), ~ as.numeric(.x)))
+    )
+    mb_col <- sheet_current %>% dplyr::select(c(starts_with("Mesh"),starts_with("MB_CODE"))) %>% colnames() %>% first()
+    dwelling_col <- sheet_current %>% dplyr::select(starts_with("Dwelling")) %>% colnames() %>% first()
+    person_col <- sheet_current %>% dplyr::select(starts_with("Person")) %>% colnames() %>% first()
+
+    if(!is.na(mb_col)) sheet_current <- sheet_current %>% rename("mb_code"=mb_col)
+    if(!is.na(dwelling_col)) sheet_current <- sheet_current %>% rename("dwelling"=dwelling_col)
+    if(!is.na(person_col)) sheet_current <- sheet_current %>% rename("person"=person_col)
+    
+    sheet_current <- sheet_current %>%
+      dplyr::select(any_of(c("mb_code","dwelling","person"))) %>%
+      mutate(mb_code = as.numeric(mb_code)) %>%
+      filter(!is.na(mb_code))
     
     mb_count_df <- bind_rows(
       mb_count_df,
@@ -47,9 +76,12 @@ convertMeshblockCountToCsv <- function(input_file, output_file) {
     distinct()
   
   # save cleaned file to specified location
-  write.csv(mb_count_df, output_file, row.names=F)
+  write.csv(mb_count_df, output_file, row.names=F, quote=F)
 }
 
+
+
+# ensures that the various community codes are numeric
 cleanDatatypes <- function(df) {
   output <- df %>%
     mutate(
@@ -97,13 +129,22 @@ findTopTwo <- function(aggregate_by, boundary_type) {
     filter(rank<=2) %>%
     pivot_wider(names_from=rank,
                 values_from=c("boundary_code", "boundary_name")) %>%
-    rename(!!aggregate_by:=community_code) %>%
+    rename(!!aggregate_by:=community_code)
+  
+  # if the geometries never cross two boundaries, we need to add in those columns
+  if(!"boundary_code_2"%in%colnames(output)) {
+    output <- output %>%
+      mutate(boundary_code_2=NA) %>%
+      mutate(boundary_name_2=NA)
+  }
+  
+  output <- output %>%
     rename_with(~ gsub("boundary_", paste0(boundary_type,"_"), .x, fixed = TRUE))
 
   return(output)
 }
 
-
+# sums the population and dwelling count for the sa1/sa2/etc
 findPopulation <- function(aggregate_by) {
   output <- mb_no_geom
   # the meshblocks don't store the australia code
@@ -120,6 +161,12 @@ findPopulation <- function(aggregate_by) {
   return(output)
 }
 
+
+
+# calculates the population-weighted centroid for the sa1/sa2/etc. If the total 
+# population for the sa1/sa2/etc region is zero, a standard centroid is used.
+# If the centroid lies outside the sa1/sa2/etc region, the point_on_surface
+# algorithm is used to ensure the point is always inside the region. 
 calculateCentroids <- function(aggregate_by, df) {
   # aggregate_by="sa1_code";df=sa1_combined
   # aggregate_by="city_code";df=cities_combined
@@ -216,4 +263,5 @@ calculateCentroids <- function(aggregate_by, df) {
   
   return(centroids_final)
 }
+
 

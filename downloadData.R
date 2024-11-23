@@ -21,6 +21,7 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
 yearToProcess<-opt$year
+# yearToProcess=2011
 # yearToProcess=2021
 
 cat(paste0("Running downloadData.R for ",yearToProcess,"\n"))
@@ -62,9 +63,11 @@ for (i in 1:length(zipped_files)) {
 }
 
 xls_files <- files_df$file_name[grepl("*.xls", files_df$file_name)]
+# xls_files <- c("mb_count_2011.xls","mb_count_2016.xls","mb_count_2021.xlsx")
 
 # converting excel files to csv
 for (i in 1:length(xls_files)) {
+  # i=1
   file_name_current <- paste0("data/",xls_files[i])
   file_name_final <- gsub("xlsx", "csv", file_name_current)
   file_name_final <- gsub("xls", "csv", file_name_final)
