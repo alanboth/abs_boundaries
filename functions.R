@@ -161,13 +161,46 @@ findPopulation <- function(aggregate_by) {
   return(output)
 }
 
+# Calculates the centroid for a given dataframe. If the centroid lies outside
+# the initial region's polygon, the point_on_surface algorithm is used to ensure
+# the point is always inside the region. 
+calculateCentroids <- function(df, id_column) {
+  # df=mb
+  
+  df <- df %>%
+    mutate(temp_row_id=row_number())
 
+  centroids_initial <- df %>%
+    st_centroid()
+  
+  distance_to_df <- st_distance(centroids_initial, df, by_element=T) %>%
+    as.numeric()
+  
+  df_centroids_outside <- df %>%
+    mutate(centroid_distance=distance_to_df) %>%
+    filter(centroid_distance>0) %>%
+    st_point_on_surface()
+  
+  df_centroids_inside <- centroids_initial %>%
+    mutate(centroid_distance=distance_to_df) %>%
+    filter(centroid_distance==0)
+  
+  df_centroids <- bind_rows(
+    df_centroids_outside,
+    df_centroids_inside
+  ) %>%
+    st_sf() %>%
+    arrange(temp_row_id) %>%
+    dplyr::select(-temp_row_id,-centroid_distance)
+  
+  return(df_centroids)
+}
 
-# calculates the population-weighted centroid for the sa1/sa2/etc. If the total 
+# Calculates the population-weighted centroid for the sa1/sa2/etc. If the total 
 # population for the sa1/sa2/etc region is zero, a standard centroid is used.
 # If the centroid lies outside the sa1/sa2/etc region, the point_on_surface
 # algorithm is used to ensure the point is always inside the region. 
-calculateCentroids <- function(aggregate_by, df) {
+calculateWeightedCentroids <- function(aggregate_by, df) {
   # aggregate_by="sa1_code";df=sa1_combined
   # aggregate_by="city_code";df=cities_combined
   # aggregate_by="state_code";df=state_combined

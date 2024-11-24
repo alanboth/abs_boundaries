@@ -98,28 +98,8 @@ cat(paste0("Processing meshblocks\n"))
 mb <- mb_input %>%
   cleanDatatypes()
 
-mb_centroids_initial <- mb %>%
+mb_centroids <- calculateCentroids(mb_filtered) %>%
   dplyr::select(mb_code) %>%
-  st_centroid()
-
-distance_to_mb <- st_distance(mb_centroids_initial, mb, by_element=T) %>%
-  as.numeric()
-
-mb_distance <- mb %>%
-  dplyr::select(mb_code) %>%
-  mutate(centroid_distance=distance_to_mb)
-
-
-mb_centroids_outside <- mb_distance %>%
-  filter(centroid_distance>0) %>%
-  dplyr::select(mb_code) %>%
-  st_point_on_surface()
-
-mb_centroids <- bind_rows(
-  mb_centroids_initial %>% filter(!mb_code%in%mb_centroids_outside$mb_code),
-  mb_centroids_outside
-) %>%
-  st_sf() %>%
   arrange(mb_code)
 
 mb_sos    <- st_join(mb_centroids, sos, join=st_intersects)
@@ -300,18 +280,18 @@ australia_combined <- australia_input %>%
 # centroids ---------------------------------------------------------------
 cat(paste0("Calculating centroids\n"))
 
-cities_centroids <- calculateCentroids("city_code",cities_combined)
+cities_centroids <- calculateWeightedCentroids("city_code",cities_combined)
 
-state_centroids <- calculateCentroids("state_code",state_combined) 
+state_centroids <- calculateWeightedCentroids("state_code",state_combined) 
 
-lga_centroids <- calculateCentroids("lga_code",lga_combined) 
+lga_centroids <- calculateWeightedCentroids("lga_code",lga_combined) 
 
-ssc_centroids <- calculateCentroids("ssc_code",ssc_combined) 
+ssc_centroids <- calculateWeightedCentroids("ssc_code",ssc_combined) 
 
-sa4_centroids <- calculateCentroids("sa4_code",sa4_combined) 
-sa3_centroids <- calculateCentroids("sa3_code",sa3_combined) 
-sa2_centroids <- calculateCentroids("sa2_code",sa2_combined) 
-sa1_centroids <- calculateCentroids("sa1_code",sa1_combined) 
+sa4_centroids <- calculateWeightedCentroids("sa4_code",sa4_combined) 
+sa3_centroids <- calculateWeightedCentroids("sa3_code",sa3_combined) 
+sa2_centroids <- calculateWeightedCentroids("sa2_code",sa2_combined) 
+sa1_centroids <- calculateWeightedCentroids("sa1_code",sa1_combined) 
 
 
 
