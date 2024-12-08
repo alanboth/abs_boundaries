@@ -1,6 +1,41 @@
-# ABS boundaries
+# ABS-derived boundary files
 
-Scripts for downloading and processing ABS boundaries. Run ``Rscript installPackages.R`` to install the required packages.
+The purpose of this repository is to provide a convenient method for downloading the various boundary files from the Australian Bureau of Statistics (ABS) and converting them into a consistent format. Some benefits of this code include:
+
+* A single place to get all the ABS boundary files across 2011, 2016 and 2021
+
+* Automatically downloads all necessary files
+
+* Consistently formatted column headings across the years (SA1_MAIN11, SA1_MAINCODE_2016, SA1_CODE_2021 are now all now sa1_code)
+
+* Includes population-weighted centroids for each boundary type that are guaranteed to lie within the original region’s geometry (i.e., no centroids in the ocean)
+
+* Manually extracting the population and dwelling counts from ABS excel spreadsheets is usually an error-prone manual task. This code automatically converts them into clean CSVs
+
+* Some suburbs can lie in multiple LGAs. This code will store the largest two for each suburb
+
+* Produces a single [sqlite](https://www.gaia-gis.it/fossil/libspatialite/index) file for each census year, which can be used across projects
+
+* Includes code that can filter the boundaries down to just the cities or states required, optionally including a user-specified buffer
+
+Output files are available [here](https://research-repository.rmit.edu.au/articles/dataset/ABS-derived_boundary_files/27966567).
+
+
+
+## Quick setup
+
+This assumes you have [R](https://www.r-project.org/) installed
+
+```bash
+# install any missing R packages
+Rscript installPackages.R
+# download the raw boundary files from the ABS
+Rscript downloadData.R --year='2021'
+# convert the data into a consistent output format
+Rscript convertData.R --year='2021'
+```
+
+
 
 --------------------------------------------------------------------------------
 
