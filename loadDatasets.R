@@ -44,6 +44,10 @@ if(year==2011) {
                   area_albers_sqkm=SQKM) %>%
     renameGeometryColumn()
 
+  poa_input <- st_read("/vsizip/data/poa_2011.zip") %>%
+    dplyr::select(poa_code=POA_CODE, poa_name=POA_NAME,
+                  area_albers_sqkm=SQKM)
+
   # the states aren't included in the 2011 state suburbs shapefile
   ssc_states <- st_join(ssc_input%>%dplyr::select(ssc_code)%>%st_centroid(of_largest_polygon=T),
                  state_input%>%dplyr::select(state_code,state_name),
@@ -139,7 +143,16 @@ if(year==2016) {
                   state_code=STATE_CODE_2016, state_name=STATE_NAME_2016,
                   area_albers_sqkm=AREA_ALBERS_SQKM)
   
-  sa4_input <- st_read("data/asgs_vol_1_2016.gpkg", layer="SA4_2016_AUST") %>%
+  poa_input <- st_read("data/asgs_vol_3_2016.gpkg", layer="SSC_2016_AUST") %>%
+    dplyr::select(ssc_code=SSC_CODE_2016, ssc_name=SSC_NAME_2016,
+                  state_code=STATE_CODE_2016, state_name=STATE_NAME_2016,
+                  area_albers_sqkm=AREA_ALBERS_SQKM)
+  
+  poa_input <- st_read("data/asgs_vol_3_2016.gpkg", layer="POA_2016_AUST") %>%
+    dplyr::select(poa_code=POA_CODE_2016, poa_name=POA_NAME_2016,
+                  area_albers_sqkm=AREA_ALBERS_SQKM)
+
+    sa4_input <- st_read("data/asgs_vol_1_2016.gpkg", layer="SA4_2016_AUST") %>%
     dplyr::select(sa4_code=SA4_CODE_2016,
                   state_code=STATE_CODE_2016, state_name=STATE_NAME_2016,
                   area_albers_sqkm=AREA_ALBERS_SQKM)
@@ -206,6 +219,10 @@ if(year==2021) {
                   state_code=STATE_CODE_2021, state_name=STATE_NAME_2021,
                   area_albers_sqkm=AREA_ALBERS_SQKM)
   
+  poa_input <- st_read("data/asgs_vol_3_2021.gpkg", layer="POA_2021_AUST_GDA2020") %>%
+    dplyr::select(poa_code=POA_CODE_2021, poa_name=POA_NAME_2021,
+                  area_albers_sqkm=AREA_ALBERS_SQKM)
+
   sa4_input <- st_read("data/asgs_vol_1_2021.gpkg", layer="SA4_2021_AUST_GDA2020") %>%
     dplyr::select(sa4_code=SA4_CODE_2021,
                   state_code=STATE_CODE_2021, state_name=STATE_NAME_2021,

@@ -85,7 +85,8 @@ convertMeshblockCountToCsv <- function(input_file, output_file) {
 cleanDatatypes <- function(df) {
   output <- df %>%
     mutate(
-      across(any_of(c("mb_code", "sa1_code", "sa2_code", "sa3_code", "sa4_code", "ssc_code", "lga_code", "state_code")),
+      across(any_of(c("mb_code", "sa1_code", "sa2_code", "sa3_code", "sa4_code",
+                      "poa_code", "ssc_code", "lga_code", "state_code")),
              ~ as.double(.x))
     ) %>%
     filter(!st_is_empty(.))

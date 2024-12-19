@@ -36,6 +36,7 @@ gccsa_input     <- NULL
 sua_input       <- NULL
 sos_input       <- NULL
 lga_input       <- NULL
+poa_input       <- NULL
 ssc_input       <- NULL
 sa4_input       <- NULL
 sa3_input       <- NULL
@@ -82,6 +83,10 @@ cities <- bind_rows(gccsa, sua_filtered) %>%
 sos <- sos_input %>%
   cleanDatatypes()
 
+poa <- poa_input %>%
+  cleanDatatypes() %>%
+  dplyr::select(poa_code, poa_name)
+
 ssc <- ssc_input %>%
   cleanDatatypes() %>%
   dplyr::select(ssc_code, ssc_name)
@@ -98,13 +103,14 @@ cat(paste0("Processing meshblocks\n"))
 mb <- mb_input %>%
   cleanDatatypes()
 
-mb_centroids <- calculateCentroids(mb_filtered) %>%
+mb_centroids <- calculateCentroids(mb) %>%
   dplyr::select(mb_code) %>%
   arrange(mb_code)
 
 mb_sos    <- st_join(mb_centroids, sos, join=st_intersects)
 mb_cities <- st_join(mb_sos      , cities%>%dplyr::select(city_code,city_name), join=st_intersects)
-mb_ssc    <- st_join(mb_cities   , ssc, join=st_intersects)
+mb_poa    <- st_join(mb_cities   , poa, join=st_intersects)
+mb_ssc    <- st_join(mb_poa      , ssc, join=st_intersects)
 mb_lga    <- st_join(mb_ssc      , lga, join=st_intersects)
 
 
@@ -116,9 +122,9 @@ mb_count <- mb_count_input %>%
 mb_combined <- left_join(mb, mb_count, by="mb_code") %>%
   left_join(mb_lga%>%st_drop_geometry(), by="mb_code") %>%
   dplyr::select(mb_code, mb_category, sa1_code, sa2_code, sa3_code, sa4_code,
-                ssc_code, ssc_name, lga_code, lga_name, city_code, city_name,
-                state_code, state_name, sos_category, dwelling, person,
-                area_albers_sqkm) %>%
+                poa_code, poa_name, ssc_code, ssc_name, lga_code, lga_name,
+                city_code, city_name, state_code, state_name,
+                sos_category, dwelling, person, area_albers_sqkm) %>%
   arrange(mb_code)
 
 mb_no_geom <- mb_combined %>%
@@ -169,10 +175,12 @@ sa1_combined <- sa1_input %>%
   cleanDatatypes() %>%
   left_join(sa1_sos                                                , by="sa1_code") %>%
   left_join(findCity(aggregate_by="sa1_code")                      , by="sa1_code") %>%
+  left_join(findTopTwo(aggregate_by="sa1_code",boundary_type="poa"), by="sa1_code") %>%
   left_join(findTopTwo(aggregate_by="sa1_code",boundary_type="ssc"), by="sa1_code") %>%
   left_join(findTopTwo(aggregate_by="sa1_code",boundary_type="lga"), by="sa1_code") %>%
   left_join(findPopulation(aggregate_by="sa1_code")                , by="sa1_code") %>%
   dplyr::select(sa1_code, sa2_code, sa3_code, sa4_code,
+                poa_code_1, poa_name_1, poa_code_2, poa_name_2, 
                 ssc_code_1, ssc_name_1, ssc_code_2, ssc_name_2, 
                 lga_code_1, lga_name_1, lga_code_2, lga_name_2, 
                 city_code, city_name, state_code, state_name, sos_category,
@@ -187,10 +195,12 @@ cat(paste0("Processing sa2\n"))
 sa2_combined <- sa2_input %>%
   cleanDatatypes() %>%
   left_join(findCity(aggregate_by="sa2_code")                      , by="sa2_code") %>%
+  left_join(findTopTwo(aggregate_by="sa2_code",boundary_type="poa"), by="sa2_code") %>%
   left_join(findTopTwo(aggregate_by="sa2_code",boundary_type="ssc"), by="sa2_code") %>%
   left_join(findTopTwo(aggregate_by="sa2_code",boundary_type="lga"), by="sa2_code") %>%
   left_join(findPopulation(aggregate_by="sa2_code")                , by="sa2_code") %>%
   dplyr::select(sa2_code, sa3_code, sa4_code,
+                poa_code_1, poa_name_1, poa_code_2, poa_name_2, 
                 ssc_code_1, ssc_name_1, ssc_code_2, ssc_name_2, 
                 lga_code_1, lga_name_1, lga_code_2, lga_name_2, 
                 city_code, city_name, state_code, state_name,
@@ -265,6 +275,26 @@ lga_combined <- lga_input %>%
 
 
 
+# poa ---------------------------------------------------------------------
+cat(paste0("Processing poa\n"))
+
+poa_combined <- poa_input %>%
+  cleanDatatypes() %>%
+  left_join(findTopTwo(aggregate_by="poa_code",boundary_type="city"), by="poa_code") %>%
+  left_join(findTopTwo(aggregate_by="poa_code",boundary_type="lga") , by="poa_code") %>%
+  left_join(findTopTwo(aggregate_by="poa_code",boundary_type="ssc") , by="poa_code") %>%
+  left_join(findTopTwo(aggregate_by="poa_code",boundary_type="state") , by="poa_code") %>%
+  left_join(findPopulation(aggregate_by="poa_code")                 , by="poa_code") %>%
+  dplyr::select(poa_code, poa_name,
+                ssc_code_1, ssc_name_1, ssc_code_2, ssc_name_2, 
+                lga_code_1, lga_name_1, lga_code_2, lga_name_2, 
+                city_code_1, city_name_1, city_code_2, city_name_2,
+                state_code_1, state_name_1, state_code_2, state_name_2,
+                dwelling, person, area_albers_sqkm) %>%
+  arrange(poa_code)
+
+
+
 # states and Australia ----------------------------------------------------
 cat(paste0("Processing states and Australia boundaries\n"))
 
@@ -288,6 +318,8 @@ lga_centroids <- calculateWeightedCentroids("lga_code",lga_combined)
 
 ssc_centroids <- calculateWeightedCentroids("ssc_code",ssc_combined) 
 
+poa_centroids <- calculateWeightedCentroids("poa_code",poa_combined) 
+
 sa4_centroids <- calculateWeightedCentroids("sa4_code",sa4_combined) 
 sa3_centroids <- calculateWeightedCentroids("sa3_code",sa3_combined) 
 sa2_centroids <- calculateWeightedCentroids("sa2_code",sa2_combined) 
@@ -303,6 +335,7 @@ st_write(state_combined    , paste0("output/boundaries_",year,".sqlite"), layer=
 st_write(cities_combined   , paste0("output/boundaries_",year,".sqlite"), layer="cities"   , append=F)
 st_write(lga_combined      , paste0("output/boundaries_",year,".sqlite"), layer="lga"      , append=F)
 st_write(ssc_combined      , paste0("output/boundaries_",year,".sqlite"), layer="ssc"      , append=F)
+st_write(poa_combined      , paste0("output/boundaries_",year,".sqlite"), layer="poa"      , append=F)
 st_write(sa4_combined      , paste0("output/boundaries_",year,".sqlite"), layer="sa4"      , append=F)
 st_write(sa3_combined      , paste0("output/boundaries_",year,".sqlite"), layer="sa3"      , append=F)
 st_write(sa2_combined      , paste0("output/boundaries_",year,".sqlite"), layer="sa2"      , append=F)
@@ -313,6 +346,7 @@ st_write(state_centroids   , paste0("output/boundaries_",year,".sqlite"), layer=
 st_write(cities_centroids  , paste0("output/boundaries_",year,".sqlite"), layer="cities_centroids", append=F)
 st_write(lga_centroids     , paste0("output/boundaries_",year,".sqlite"), layer="lga_centroids"   , append=F)
 st_write(ssc_centroids     , paste0("output/boundaries_",year,".sqlite"), layer="ssc_centroids"   , append=F)
+st_write(poa_centroids     , paste0("output/boundaries_",year,".sqlite"), layer="poa_centroids"   , append=F)
 st_write(sa4_centroids     , paste0("output/boundaries_",year,".sqlite"), layer="sa4_centroids"   , append=F)
 st_write(sa3_centroids     , paste0("output/boundaries_",year,".sqlite"), layer="sa3_centroids"   , append=F)
 st_write(sa2_centroids     , paste0("output/boundaries_",year,".sqlite"), layer="sa2_centroids"   , append=F)

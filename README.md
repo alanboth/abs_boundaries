@@ -20,8 +20,6 @@ The purpose of this repository is to provide a convenient method for downloading
 
 Output files are available [here](https://research-repository.rmit.edu.au/articles/dataset/ABS-derived_boundary_files/27966567).
 
-
-
 ## Quick setup
 
 This assumes you have [R](https://www.r-project.org/) installed
@@ -34,8 +32,6 @@ Rscript downloadData.R --year='2021'
 # convert the data into a consistent output format
 Rscript convertData.R --year='2021'
 ```
-
-
 
 --------------------------------------------------------------------------------
 
@@ -86,6 +82,7 @@ Rscript convertData.R [--year]
 * cities
 * lga *(local government areas)*
 * ssc *(state suburbs/suburbs and localities)*
+* poa *(postcodes)*
 * sa4 *(statistical area level 4)*
 * sa3 *(statistical area level 3)*
 * sa2 *(statistical area level 2)*
@@ -95,6 +92,7 @@ Rscript convertData.R [--year]
 * cities_centroids
 * lga_centroids
 * ssc_centroids
+* poa_centroids
 * sa4_centroids
 * sa3_centroids
 * sa2_centroids
