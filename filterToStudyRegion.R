@@ -66,7 +66,7 @@ if (!is.na(states)) states_list <- strsplit(states,",|, | ,| , ")[[1]]
 
 mb_input <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="mb") %>%
   dplyr::select(any_of(c("mb_code","sa1_code","sa2_code","sa3_code","sa4_code",
-                         "ssc_code","lga_code","city_name","state_name")))
+                         "poa_code","ssc_code","lga_code","city_name","state_name")))
 
 # if we're not transforming the crs, just use the current one
 if(is.na(epsg)) epsg <- st_crs(mb_input)
@@ -127,6 +127,7 @@ if (!is.na(states) & !is.na(buffer)) {
 
 states_included <- mb_filtered %>% pull(state_name) %>% unique()
 cities_included <- mb_filtered %>% filter(!is.na(city_name)) %>% pull(city_name) %>% unique()
+poa_included    <- mb_filtered %>% pull(poa_code) %>% unique()
 lga_included    <- mb_filtered %>% pull(lga_code) %>% unique()
 ssc_included    <- mb_filtered %>% pull(ssc_code) %>% unique()
 sa4_included    <- mb_filtered %>% pull(sa4_code) %>% unique()
@@ -145,6 +146,9 @@ state     <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="state" 
                st_transform(epsg)
 cities    <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="cities"   ) %>%
                filter(city_name %in% cities_included) %>%
+               st_transform(epsg)
+poa       <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="poa"      ) %>%
+               filter(poa_code %in% poa_included) %>%
                st_transform(epsg)
 lga       <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="lga"      ) %>%
                filter(lga_code %in% lga_included) %>%
@@ -173,6 +177,9 @@ state_centroids  <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="
                       st_transform(epsg)
 cities_centroids <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="cities_centroids") %>%
                       filter(city_name %in% cities_included) %>%
+                      st_transform(epsg)
+poa_centroids    <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="poa_centroids"   ) %>%
+                      filter(poa_code %in% poa_included) %>%
                       st_transform(epsg)
 lga_centroids    <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="lga_centroids"   ) %>%
                       filter(lga_code %in% lga_included) %>%
@@ -204,6 +211,7 @@ cat(paste0("Writing processed boundaries\n"))
 st_write(australia, paste0("final/",filename,"_",year,".sqlite"), layer="australia", append=F)
 st_write(state    , paste0("final/",filename,"_",year,".sqlite"), layer="state"    , append=F)
 st_write(cities   , paste0("final/",filename,"_",year,".sqlite"), layer="cities"   , append=F)
+st_write(poa      , paste0("final/",filename,"_",year,".sqlite"), layer="poa"      , append=F)
 st_write(lga      , paste0("final/",filename,"_",year,".sqlite"), layer="lga"      , append=F)
 st_write(ssc      , paste0("final/",filename,"_",year,".sqlite"), layer="ssc"      , append=F)
 st_write(sa4      , paste0("final/",filename,"_",year,".sqlite"), layer="sa4"      , append=F)
@@ -214,6 +222,7 @@ st_write(mb       , paste0("final/",filename,"_",year,".sqlite"), layer="mb"    
 
 st_write(state_centroids , paste0("final/",filename,"_",year,".sqlite"), layer="state_centroids" , append=F)
 st_write(cities_centroids, paste0("final/",filename,"_",year,".sqlite"), layer="cities_centroids", append=F)
+st_write(poa_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="poa_centroids"   , append=F)
 st_write(lga_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="lga_centroids"   , append=F)
 st_write(ssc_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="ssc_centroids"   , append=F)
 st_write(sa4_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="sa4_centroids"   , append=F)

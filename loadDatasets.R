@@ -46,7 +46,8 @@ if(year==2011) {
 
   poa_input <- st_read("/vsizip/data/poa_2011.zip") %>%
     dplyr::select(poa_code=POA_CODE, poa_name=POA_NAME,
-                  area_albers_sqkm=SQKM)
+                  area_albers_sqkm=SQKM) %>%
+    renameGeometryColumn()
 
   # the states aren't included in the 2011 state suburbs shapefile
   ssc_states <- st_join(ssc_input%>%dplyr::select(ssc_code)%>%st_centroid(of_largest_polygon=T),

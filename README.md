@@ -157,14 +157,14 @@ Specify the filename for your output dataset.
 
 ```bash
 # A Victoria study region
-filterToStudyRegion.R
+Rscript filterToStudyRegion.R \
   --year='2016' \
   --states='Victoria' \
   --epsg='7899' \
   --filename='Victoria'
 
 # Melbourne and Sydney plus a 10km buffer
-filterToStudyRegion.R
+Rscript filterToStudyRegion.R \
   --year='2021' \
   --cities='Greater Melbourne, Greater Sydney' \
   --buffer='10000' \

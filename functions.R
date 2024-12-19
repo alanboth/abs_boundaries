@@ -206,7 +206,7 @@ calculateWeightedCentroids <- function(aggregate_by, df) {
   # aggregate_by="city_code";df=cities_combined
   # aggregate_by="state_code";df=state_combined
   # aggregate_by="sa4_code";df=sa4_combined
-  
+
   df_regions <- df %>%
     rename(community_code=!!aggregate_by) %>%
     dplyr::select(community_code) %>%
@@ -251,12 +251,11 @@ calculateWeightedCentroids <- function(aggregate_by, df) {
     summarise(X=weighted.mean(X, person, na.rm=T),
               Y=weighted.mean(Y, person, na.rm=T)) %>%
     ungroup() %>%
-    st_as_sf(coords = c("X", "Y"), crs = crs_current)
+    st_as_sf(coords = c("X", "Y"), crs = crs_current) %>%
+    # fixing the geometry column so it's consistent with the others
+    renameGeometryColumn()
   
-  # fixing the geometry column so it's consistent with the others
-  if(!"geom"%in%colnames(weighted_centroids)) {
-    st_geometry(weighted_centroids) <- "geom"
-  }
+  
   
   # a single dataframe with all centroids
   combined_centroids <- bind_rows(
