@@ -13,35 +13,37 @@ options(dplyr.summarise.inform = FALSE) # make dplyr stop blabbing about summari
 # source('functions.R')
 
 option_list = list(
-  make_option(c("-y", "--year"), type="integer", default=NULL, 
-              help="year to process", metavar="character"),
-  make_option(c("-c", "--cities"), type="character", default=NA, 
-              help="list of cities to filter to", metavar="character"),
-  make_option(c("-s", "--states"), type="character", default=NA, 
-              help="list of states to filter to", metavar="character"),
-  make_option(c("-b", "--buffer"), type="double", default=NA, 
-              help="buffer distance in metres", metavar="character"),
-  make_option(c("-e", "--epsg"), type="integer", default=NA, 
-              help="The EPSG code for the map projection", metavar="character"),
-  make_option(c("-f", "--filename"), type="character", default=NA, 
-              help="The file name for the dataset", metavar="character")
+  make_option("--year"    , type="integer"  , default=NA      , help="year to process"                     ),
+  make_option("--cities"  , type="character", default=NA      , help="list of cities to filter to"         ),
+  make_option("--states"  , type="character", default=NA      , help="list of states to filter to"         ),
+  make_option("--buffer"  , type="double"   , default=NA      , help="buffer distance in metres"           ),
+  make_option("--epsg"    , type="integer"  , default=NA      , help="The EPSG code for the map projection"),
+  make_option("--format"  , type="character", default="sqlite", help="The file format"                     ),
+  make_option("--filename", type="character", default=NA      , help="The file name for the dataset"       )
 );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-year     <- opt$year
-cities   <- opt$cities
-states   <- opt$states
-buffer   <- opt$buffer
-epsg     <- opt$epsg
-filename <- opt$filename
+year       <- opt$year
+cities     <- opt$cities
+states     <- opt$states
+buffer     <- opt$buffer
+epsg       <- opt$epsg
+fileformat <- tolower(opt$format)
+filename   <- opt$filename
 # year=2021
 
 if(is.na(year)) stop("ERROR: no year specified. Exiting now.")
 if(is.na(filename)) stop("ERROR: no filename specified. Exiting now.")
 
-
+file_extension <- case_when(
+  fileformat=="sqlite" ~ "sqlite",
+  fileformat=="sql" ~ "sqlite",
+  fileformat=="geopackage" ~ "gpkg",
+  fileformat=="gpkg" ~ "gpkg",
+  .default = "sqlite"
+)
 
 cat(paste0("Running convertData.R with the following parameters:\n"))
 cat(paste0("Year:     ",year    ,"\n"))
@@ -208,27 +210,27 @@ mb_centroids     <- st_read(paste0("output/boundaries_",year,".sqlite"), layer="
 # write converted boundaries ----------------------------------------------
 cat(paste0("Writing processed boundaries\n"))
 
-st_write(australia, paste0("final/",filename,"_",year,".sqlite"), layer="australia", append=F)
-st_write(state    , paste0("final/",filename,"_",year,".sqlite"), layer="state"    , append=F)
-st_write(cities   , paste0("final/",filename,"_",year,".sqlite"), layer="cities"   , append=F)
-st_write(poa      , paste0("final/",filename,"_",year,".sqlite"), layer="poa"      , append=F)
-st_write(lga      , paste0("final/",filename,"_",year,".sqlite"), layer="lga"      , append=F)
-st_write(ssc      , paste0("final/",filename,"_",year,".sqlite"), layer="ssc"      , append=F)
-st_write(sa4      , paste0("final/",filename,"_",year,".sqlite"), layer="sa4"      , append=F)
-st_write(sa3      , paste0("final/",filename,"_",year,".sqlite"), layer="sa3"      , append=F)
-st_write(sa2      , paste0("final/",filename,"_",year,".sqlite"), layer="sa2"      , append=F)
-st_write(sa1      , paste0("final/",filename,"_",year,".sqlite"), layer="sa1"      , append=F)
-st_write(mb       , paste0("final/",filename,"_",year,".sqlite"), layer="mb"       , append=F)
+st_write(australia, paste0("final/",filename,"_",year,".",file_extension), layer="australia", append=F)
+st_write(state    , paste0("final/",filename,"_",year,".",file_extension), layer="state"    , append=F)
+st_write(cities   , paste0("final/",filename,"_",year,".",file_extension), layer="cities"   , append=F)
+st_write(poa      , paste0("final/",filename,"_",year,".",file_extension), layer="poa"      , append=F)
+st_write(lga      , paste0("final/",filename,"_",year,".",file_extension), layer="lga"      , append=F)
+st_write(ssc      , paste0("final/",filename,"_",year,".",file_extension), layer="ssc"      , append=F)
+st_write(sa4      , paste0("final/",filename,"_",year,".",file_extension), layer="sa4"      , append=F)
+st_write(sa3      , paste0("final/",filename,"_",year,".",file_extension), layer="sa3"      , append=F)
+st_write(sa2      , paste0("final/",filename,"_",year,".",file_extension), layer="sa2"      , append=F)
+st_write(sa1      , paste0("final/",filename,"_",year,".",file_extension), layer="sa1"      , append=F)
+st_write(mb       , paste0("final/",filename,"_",year,".",file_extension), layer="mb"       , append=F)
 
-st_write(state_centroids , paste0("final/",filename,"_",year,".sqlite"), layer="state_centroids" , append=F)
-st_write(cities_centroids, paste0("final/",filename,"_",year,".sqlite"), layer="cities_centroids", append=F)
-st_write(poa_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="poa_centroids"   , append=F)
-st_write(lga_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="lga_centroids"   , append=F)
-st_write(ssc_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="ssc_centroids"   , append=F)
-st_write(sa4_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="sa4_centroids"   , append=F)
-st_write(sa3_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="sa3_centroids"   , append=F)
-st_write(sa2_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="sa2_centroids"   , append=F)
-st_write(sa1_centroids   , paste0("final/",filename,"_",year,".sqlite"), layer="sa1_centroids"   , append=F)
-st_write(mb_centroids    , paste0("final/",filename,"_",year,".sqlite"), layer="mb_centroids"    , append=F)
+st_write(state_centroids , paste0("final/",filename,"_",year,".",file_extension), layer="state_centroids" , append=F)
+st_write(cities_centroids, paste0("final/",filename,"_",year,".",file_extension), layer="cities_centroids", append=F)
+st_write(poa_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="poa_centroids"   , append=F)
+st_write(lga_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="lga_centroids"   , append=F)
+st_write(ssc_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="ssc_centroids"   , append=F)
+st_write(sa4_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="sa4_centroids"   , append=F)
+st_write(sa3_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="sa3_centroids"   , append=F)
+st_write(sa2_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="sa2_centroids"   , append=F)
+st_write(sa1_centroids   , paste0("final/",filename,"_",year,".",file_extension), layer="sa1_centroids"   , append=F)
+st_write(mb_centroids    , paste0("final/",filename,"_",year,".",file_extension), layer="mb_centroids"    , append=F)
 
 

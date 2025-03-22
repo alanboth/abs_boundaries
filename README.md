@@ -149,26 +149,32 @@ Specify the buffer distance in metres around the desired cities or states to be 
 
 Specify the EPSG (i.e., coordinate reference system to transform the data into). Not mandatory, but if nothing is specified, the source dataset's EPSG will be used.
 
-``--filename``
+`--format`
+
+Specify the file format for your output dataset. Defaults to `'sqlite'` but geopackage `'gpkg'` is also possible
+
+`--filename`
 
 Specify the filename for your output dataset.
 
 #### Example
 
 ```bash
-# A Victoria study region
+# A Victoria study region in sqlite format
 Rscript filterToStudyRegion.R \
   --year='2016' \
   --states='Victoria' \
   --epsg='7899' \
+  --format='sqlite' \
   --filename='Victoria'
 
-# Melbourne and Sydney plus a 10km buffer
+# Melbourne and Sydney plus a 10km buffer in geopackage format
 Rscript filterToStudyRegion.R \
   --year='2021' \
   --cities='Greater Melbourne, Greater Sydney' \
   --buffer='10000' \
   --epsg='7845' \
+  --format='gpkg' \
   --filename='MelbourneAndSydney'
 ```
 
